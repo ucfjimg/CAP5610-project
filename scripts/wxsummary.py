@@ -6,34 +6,12 @@ from state import States
 import statistics
 import matplotlib.pyplot as plt
 import numpy as np
-
-# parse stations
-class Station:
-    def __init__(self, line):
-        self.station = line[0:11]
-        self.state = line[38:40]
-        self.name = line[41:71].strip()
-    
-    def __str__(self):
-        return '%s %s %s' % (self.station, self.state, self.name)
-
-    def __repr__(self):
-        return '%s %s %s' % (self.station, self.state, self.name)
-
-stations = path.join(path.split(sys.argv[0])[0], '../data/wx/ushcn-v2.5-stations.txt')
-stations = [Station(x.strip()) for x in open(stations).readlines()]
-
-# build dict of stations by state
-states = list(set([st.state for st in stations]))
-states.sort()
-station_by_state = dict(zip(states, [[] for _ in states]))
-for st in stations:
-    station_by_state[st.state].append(st)
-
+from wxstation import Stations
 
 # Plot distribution of stations by state
 stdata = States()
-stsumm = [(st, len(station_by_state[st]), stdata.by_abbrev(st).areakm) for st in states]
+stat = Stations()
+stsumm = [(st, len(stat.station_by_state[st]), stdata.by_abbrev(st).areakm) for st in stat.station_by_state.keys()]
 stpersqkm = np.array([x[1] / int(x[2]) for x in stsumm])
 #plt.hist(stpersqkm)
 #plt.title('Stations per square km')
@@ -90,7 +68,7 @@ def obsrange(obs, start, end):
 dsets = ['prcp', 'tmin', 'tmax', 'tavg']
 totobs = 0
 missing = 0
-for st in stations:
+for st in stat.stations:
     stid = st.station
     root = path.join(path.split(sys.argv[0])[0], '../data/wx/obs/' + stid + '.FLs.52j.')
     for ds in dsets:
