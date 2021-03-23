@@ -5,7 +5,7 @@ state_names=(California Illinois Indiana Iowa Kansas Michigan Minnesota Missouri
 echo "Running..."
 for state in ${state_names[*]}
 do
-    python3 agriculture_summary.py $state
+    python3 $1 $state
 done
 
 echo "Completed!"

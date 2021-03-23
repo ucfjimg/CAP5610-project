@@ -1,5 +1,5 @@
-# Collates key data (i.e. features and possible vlaues) for further
-# processing
+# Removes unneeded columns, keeps the remainder. Summarizes the data in each
+# column by number of occurrences for each feature.
 
 import sys
 
@@ -20,7 +20,7 @@ if (len(sys.argv) != 2):
 
 state = sys.argv[1]
 
-# Constructing full paths
+# Constructing file paths
 agri_state_path = AGRI_DATA_PATH + state + COMMON_FILE_NAME
 
 agri_df = pd.read_csv(agri_state_path)
