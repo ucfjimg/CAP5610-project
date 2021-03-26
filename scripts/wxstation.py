@@ -6,6 +6,8 @@ from os import path
 class Station:
     def __init__(self, line):
         self.station = line[0:11]
+        self.lat = line[11:20]
+        self.long = line[21:30]
         self.state = line[38:40]
         self.name = line[41:71].strip()
     

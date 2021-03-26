@@ -2,3 +2,5 @@
 [data/geo/state.txt](https://www.census.gov/geographies/reference-files/2010/geo/state-area.html)
 [data/geo/stabbrev.txt](https://www.ssa.gov/international/coc-docs/states.html)
 [data/map/gadm36_USA_1.kml](https://gadm.org/index.html)
+[gaz2016zcta5centroid.csv](https://www.nber.org/research/data/zip-code-distance-database)
+(https://simplemaps.com/data/us-zips)
