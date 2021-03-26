@@ -28,9 +28,13 @@ if len(args) > 0:
     elif what == 'zip':
         res = ZIP
     else:
-        print('Unknown resolution %s' % res)
+        print('Unknown resolution %s' % what)
         sys.exit(1)
         
+    
+# states of interest
+soi = ['CA', 'IL', 'IN', 'IA', 'KS', 'MI', 'MN', 'MO', 'NE', 'ND', 'OH', 'SD', 'WI']
+
     
 space = []
 if res == STATE:
@@ -40,7 +44,6 @@ elif res == COUNTY:
 elif res == ZIP:
     space = gd.zipcodes() 
     
-
 # big empty data structure to hold multi-dimensional data
 data = {}
 for ds in dsets:
@@ -68,6 +71,10 @@ for stn in stns.stations:
     if not key in stations:
         stations[key] = []
     stations[key].append(stn)
+
+
+
+
 
 
 # add in observations from relevant stations

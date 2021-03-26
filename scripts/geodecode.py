@@ -47,7 +47,7 @@ class Geodecode:
 
         # metadata
         data = path.join(path.split(sys.argv[0])[0], '../data/geo/uszips.csv')
-        with open(data) as csvfile:
+        with open(data, encoding='utf-8') as csvfile:
             reader = csv.reader(csvfile)
             rows = [x for x in reader]
 
