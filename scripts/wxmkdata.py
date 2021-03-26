@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import codecs
 import sys
 from state import States
 from os import path
@@ -60,22 +61,14 @@ stations = {}
 for stn in stns.stations:
     if res == STATE:
         key = stn.state
-    else:
-        pt = (float(stn.lat), float(stn.long))
-        print(pt)
-        loc = gd.decode(pt)
-        if res == ZIP:
-            key = loc.zipcode
-        elif res == COUNTY:
-            key = (loc.stabbrev, loc.county)
+    elif res == ZIP:
+        key = stn.zipcode
+    elif res == COUNTY:
+        key = (stn.state, stn.county)
+
     if not key in stations:
         stations[key] = []
     stations[key].append(stn)
-
-
-
-
-
 
 # add in observations from relevant stations
 for key in stations.keys():
@@ -101,6 +94,7 @@ for ds in dsets:
             data[ds][key][year] = [x/y*scale if y != 0 else None for x,y in data[ds][key][year]]
 
 # print it out in a CSV format 
+sys.stdout = codecs.getwriter(encoding='utf-8')(sys.stdout.detach())
 print('type,state,year,jan,feb,mar,apr,may,jun,jul,aug,sep,oct,nov,dec')
 for ds in dsets:
     for key in data[ds].keys():

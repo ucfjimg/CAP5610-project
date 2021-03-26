@@ -1,21 +1,21 @@
 #!/usr/bin/env python3
 
+import csv
 import sys
 from os import path
 
 class Station:
-    def __init__(self, line):
-        self.station = line[0:11]
-        self.lat = line[11:20]
-        self.long = line[21:30]
-        self.state = line[38:40]
-        self.name = line[41:71].strip()
+    def __init__(self, hdr, data):
+        for name, value in zip(hdr, data):
+            setattr(self, name, value)
+        self.lat = float(self.lat)
+        self.long = float(self.long)
     
     def __str__(self):
-        return '%s %s %s' % (self.station, self.state, self.name)
+        return '%s %s %s %s %s' % (self.station, self.state, self.county, self.zipcode, self.name)
 
     def __repr__(self):
-        return '%s %s %s' % (self.station, self.state, self.name)
+        return self.__str__()
 
 class StationData:
     def __init__(self, stid, type):
@@ -69,8 +69,11 @@ class StationData:
 
 class Stations:
     def __init__(self):
-        stations = path.join(path.split(sys.argv[0])[0], '../data/wx/ushcn-v2.5-stations.txt')
-        self.stations = [Station(x.strip()) for x in open(stations).readlines()]
+        stations = path.join(path.split(sys.argv[0])[0], '../data/wx/wxextstat.csv')
+        f = open(stations, encoding='utf-8')
+        reader = csv.reader(f)
+        header = next(reader)
+        self.stations = [Station(header, x) for x in reader]
 
         self.states = list(set([st.state for st in self.stations]))
         self.states.sort()
