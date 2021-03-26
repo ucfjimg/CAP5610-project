@@ -4,32 +4,83 @@ import sys
 from state import States
 from os import path
 import wxstation
+import geodecode
+
+gd = geodecode.Geodecode()
 
 stns = wxstation.Stations()
 dsets = ['prcp', 'tmin', 'tmax', 'tavg']
 ystart = 1960
 yend = 2021
 
+STATE = 'state'
+COUNTY = 'county'
+ZIP = 'zip'
+
+res = STATE
+args = sys.argv[1:]
+if len(args) > 0:
+    what = args[0]
+    if what == 'state':
+        res = STATE
+    elif what == 'county':
+        res = COUNTY
+    elif what == 'zip':
+        res = ZIP
+    else:
+        print('Unknown resolution %s' % res)
+        sys.exit(1)
+        
+    
+space = []
+if res == STATE:
+    space = stns.states
+elif res == COUNTY:
+    space = gd.counties()
+elif res == ZIP:
+    space = gd.zipcodes() 
+    
+
 # big empty data structure to hold multi-dimensional data
 data = {}
 for ds in dsets:
     data[ds] = {}
-    for st in stns.states:
+    for st in space:
         data[ds][st] = {}
         for year in range(ystart, yend+1):
             data[ds][st][year] = 12 * [(0,0)]
 
+
+# bucket stations based on the desired resolution in 'res'
+stations = {}
+
+for stn in stns.stations:
+    if res == STATE:
+        key = stn.state
+    else:
+        pt = (float(stn.lat), float(stn.long))
+        print(pt)
+        loc = gd.decode(pt)
+        if res == ZIP:
+            key = loc.zipcode
+        elif res == COUNTY:
+            key = (loc.stabbrev, loc.county)
+    if not key in stations:
+        stations[key] = []
+    stations[key].append(stn)
+
+
 # add in observations from relevant stations
-for st in stns.states:
-    for stn in stns.station_by_state[st]:
+for key in stations.keys():
+    for stn in stations[key]:
         for dset in dsets: 
             stdata = wxstation.StationData(stn.station, dset)
             for year in range(ystart, yend+1):
                 for month in range(0, 12):
                     s = stdata.isample(year, month)
                     if s != None:
-                        old = data[dset][st][year][month]
-                        data[dset][st][year][month] = (old[0] + s, old[1] + 1)
+                        old = data[dset][key][year][month]
+                        data[dset][key][year][month] = (old[0] + s, old[1] + 1)
 
 # get mean of data across all stations
 for ds in dsets:
@@ -38,15 +89,18 @@ for ds in dsets:
     scale = 0.01
     if ds == 'prcp':
         scale = 0.1
-    for st in stns.states:
+    for key in data[ds].keys():
         for year in range(ystart, yend+1):
-            data[ds][st][year] = [x/y*scale if y != 0 else None for x,y in data[ds][st][year]]
+            data[ds][key][year] = [x/y*scale if y != 0 else None for x,y in data[ds][key][year]]
 
 # print it out in a CSV format 
 print('type,state,year,jan,feb,mar,apr,may,jun,jul,aug,sep,oct,nov,dec')
 for ds in dsets:
-    for st in stns.states:
+    for key in data[ds].keys():
         for year in range(ystart, yend+1):
-            prefix = [ds, st, str(year)]
-            samples = ['%.2f' % x if x != None else '' for x in data[ds][st][year]]
+            k = key
+            if res == COUNTY:
+                k = '%s:%s' % key
+            prefix = [ds, k, str(year)]
+            samples = ['%.2f' % x if x != None else '' for x in data[ds][key][year]]
             print(','.join(prefix + samples))
