@@ -23,7 +23,7 @@ class States:
         self.state = {}
         for state in data:
             self.abbrev[state.stabbrev] = state
-            self.state[state.state] = state
+            self.state[state.state.upper()] = state
         
     def by_abbrev(self, abbrev):
         '''
@@ -34,6 +34,16 @@ class States:
         if not abbrev in self.abbrev:
             return None
         return self.abbrev[abbrev]
+
+    def by_name(self, name):
+        '''
+        Look up state data by case-insensitive name. Returns
+        a State object, or None if the name is invalid.
+        '''
+        name = name.upper()
+        if not name in self.state:
+            return None
+        return self.state[name]
 
 
 if __name__ == '__main__':

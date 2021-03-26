@@ -7,7 +7,7 @@ import wxstation
 
 stns = wxstation.Stations()
 dsets = ['prcp', 'tmin', 'tmax', 'tavg']
-ystart = 1990
+ystart = 1960
 yend = 2021
 
 # big empty data structure to hold multi-dimensional data

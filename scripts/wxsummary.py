@@ -11,11 +11,15 @@ from wxstation import Stations
 # Plot distribution of stations by state
 stdata = States()
 stat = Stations()
-stsumm = [(st, len(stat.station_by_state[st]), stdata.by_abbrev(st).areakm) for st in stat.station_by_state.keys()]
+
+our_states = ['California', 'Illinois', 'Indiana', 'Iowa', 'Kansas', 'Michigan', 'Minnesota', 'Missouri', 'Nebraska', 'North Dakota', 'Ohio', 'South Dakota', 'Wisconsin']
+our_states = [stdata.by_name(st).stabbrev for st in our_states]
+
+stsumm = [(st, len(stat.station_by_state[st]), stdata.by_abbrev(st).areakm) for st in our_states]
 stpersqkm = np.array([x[1] / int(x[2]) for x in stsumm])
-#plt.hist(stpersqkm)
-#plt.title('Stations per square km')
-#plt.show()
+plt.hist(stpersqkm)
+plt.title('Stations per square km')
+plt.show()
 
 #
 # Read observations from a station file. Ignores the metadata for now.
@@ -74,7 +78,7 @@ for st in stat.stations:
     for ds in dsets:
         fname = root + ds
         obs = readobs(fname)
-        obs = obsrange(obs, 1990, 2010)
+        obs = obsrange(obs, 1960, 2010)
         totobs += len(obs)
         missing += obs.count(-9999) # missing value flag
 
