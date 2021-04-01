@@ -75,10 +75,14 @@ def in_season(dates, year):
 
 years = range(1941, 2021)
 
+
 GSP = []
 GDD = []
 GSTmax = []
 GSTmin = []
+frost = []
+summer = []
+
 
 for year in years:
     season = data.loc[in_season(data.DATE, year)]  
@@ -94,7 +98,11 @@ for year in years:
     GSTmax.append(season.TMAX.mean())
     GSTmin.append(season.TMIN.mean())
 
+    # Frost days - count of days with tmin < 0
+    frost.append((season.TMIN < 0).sum())
 
+    # Summer days - count of days with tmax > 25
+    summer.append((season.TMAX > 25).sum())
 
 
 years = pd.Series(years, name='YEAR')
@@ -102,8 +110,10 @@ GSP = pd.Series(GSP, name='GSP')
 GDD = pd.Series(GDD, name='GDD')
 GSTmax = pd.Series(GSTmax, name='GSTmax')
 GSTmin = pd.Series(GSTmin, name='GSTmin')
+frost = pd.Series(frost, name='frost')
+summer = pd.Series(summer, name='summer')
 
-data = pd.DataFrame([years, GSP, GDD, GSTmin, GSTmax]).T
+data = pd.DataFrame([years, GSP, GDD, GSTmin, GSTmax, frost, summer]).T
 data['YEAR'] = data.YEAR.astype(int)
 print(data)
 
