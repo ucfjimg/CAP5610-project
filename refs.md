@@ -4,3 +4,4 @@
 [data/map/gadm36_USA_1.kml](https://gadm.org/index.html)
 [gaz2016zcta5centroid.csv](https://www.nber.org/research/data/zip-code-distance-database)
 (https://simplemaps.com/data/us-zips)
+[ghcnd](https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/)
