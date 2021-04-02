@@ -26,7 +26,6 @@ agri_raw_state_path = AGRI_RAW_PATH + state + COMMON_FILE_NAME
 agri_processed_state_path = AGRI_PROC_PATH + state + COMMON_FILE_NAME
 
 agri_df = pd.read_csv(agri_raw_state_path)
-# agri_cols = agri_df.columns
 
 # Drop the following columns, if they exist
 for col in EMPTY_COLUMNS:
