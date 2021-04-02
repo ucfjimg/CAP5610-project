@@ -159,19 +159,21 @@ for year in all_years:
     #
     PRCP95P.append(len(season[season.PRCP >= RRwn95]))
 
-years = pd.Series(all_years, name='YEAR')
-GSP = pd.Series(GSP, name='GSP')
-GDD = pd.Series(GDD, name='GDD')
-GSTmax = pd.Series(GSTmax, name='GSTmax')
-GSTmin = pd.Series(GSTmin, name='GSTmin')
-frost = pd.Series(frost, name='frost')
-summer = pd.Series(summer, name='summer')
-HWI = pd.Series(HWI, name='HWI')
-CWI = pd.Series(CWI, name='CWI')
-dry = pd.Series(dry, name='dry')
-wet = pd.Series(wet, name='wet')
-PRCP95P = pd.Series(PRCP95P, name='PRCP95P')
-data = pd.DataFrame([years, GSP, GDD, GSTmin, GSTmax, frost, summer, HWI, CWI, dry, wet, PRCP95P]).T
+data = pd.DataFrame({
+    'YEAR': all_years,
+    'GSP': GSP,
+    'GDD': GDD,
+    'GSTmax': GSTmax,
+    'GSTmin': GSTmin,
+    'frost': frost,
+    'summer': summer,
+    'HWI': HWI,
+    'CWI': CWI,
+    'dry': dry,
+    'wet': wet,
+    'PRCP95P': PRCP95P
+})
+
 data['YEAR'] = data.YEAR.astype(int)
 print(data)
 
