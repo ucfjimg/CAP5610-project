@@ -8,6 +8,30 @@ import sys
 Extract data from the three Iowa stations used by the Frontiers paper
 '''
 
+def is_season_day(m, d):
+    '''
+    Returns True if the given date is both in `year` and is in the
+    defined (May 10-Oct 20) growing season.
+    '''
+    return ((m == 5) & (d >= 10)) | ((m >= 6) & (m <= 9)) | ((m == 10) & (d <= 20))
+
+def streak(lst):
+    '''
+    Returns the longest contiguous streak of truthy values in `lst`
+    '''
+    best = 0
+    count = 0
+
+    for v in lst:
+        if v:
+            count += 1
+            best = max(best, count)
+        else:
+            count = 0
+
+    return best
+
+
 data = ['USC00135230.csv', 'USC00137572.csv', 'USW00014940.csv']
 dataroot = path.join(path.split(sys.argv[0])[0], '../data/wx/ghcnd')
 data = map(lambda x: path.join(dataroot, x), data)
@@ -72,6 +96,11 @@ baseline = data.loc[(data.YEAR >= 1961) & (data.YEAR < 1991)]
 tmax90 = baseline[['TMAX', 'CALDAY']].groupby('CALDAY').agg(lambda lst: np.percentile(lst, 90))
 tmin20 = baseline[['TMIN', 'CALDAY']].groupby('CALDAY').agg(lambda lst: np.percentile(lst, 20))
 
+# ETCCDI: "...let RRwn95 be the 95th percentile of precipitation on wet days in the 1961-1990 period"
+baseline_season = baseline.loc[is_season_day(data.MONTH, data.DAY)]  
+baseline_wet = baseline_season[baseline_season.PRCP >= 1]
+RRwn95 = baseline_wet.PRCP.quantile(0.95)
+
 GSP = []
 GDD = []
 GSTmax = []
@@ -80,13 +109,10 @@ frost = []
 summer = []
 HWI = []
 CWI = []
+dry = []
+wet = []
+PRCP95P = []
 
-def is_season_day(m, d):
-    '''
-    Returns True if the given date is both in `year` and is in the
-    defined (May 10-Oct 20) growing season.
-    '''
-    return ((m == 5) & (d >= 10)) | ((m >= 6) & (m <= 9)) | ((m == 10) & (d <= 20))
 
 
 for year in all_years:
@@ -109,13 +135,29 @@ for year in all_years:
     # Summer days - count of days with tmax > 25
     summer.append((season.TMAX > 25).sum())
 
+    # heat and cold indices
+    # TODO the defs in the paper summary are unclear - implement
+    # the more specific ones from ETCCDI
     tmax = season.merge(tmax90, on='CALDAY')
     tmax = tmax.TMAX_x > tmax.TMAX_y
-    HWI.append(sum(tmax))
+    HWI.append(streak(tmax))
 
     tmin = season.merge(tmin20, on='CALDAY')
     tmin = tmin.TMIN_x < tmin.TMIN_y
-    CWI.append(sum(tmin))
+    CWI.append(streak(tmin))
+
+    # dry and wet - longest contiguous streak of < or > 1mm days
+    dry.append(streak(season.PRCP < 1))
+    wet.append(streak(season.PRCP >= 1))
+
+    # ETCCDI: "Annual total PRCP when RR > 95p. Let RRwj be the daily precipitation amount on 
+    # a wet day w (RR ≥ 1.0mm) in period i and let RRwn95 be the 95th percentile of 
+    # precipitation on wet days in the 1961-1990 period."
+    # 
+    # ETCCDI says this is the total precipitation on >95 percentile days; the paper 
+    # says it's the number of such days. Here we use the paper definition.
+    #
+    PRCP95P.append(len(season[season.PRCP >= RRwn95]))
 
 years = pd.Series(all_years, name='YEAR')
 GSP = pd.Series(GSP, name='GSP')
@@ -126,9 +168,12 @@ frost = pd.Series(frost, name='frost')
 summer = pd.Series(summer, name='summer')
 HWI = pd.Series(HWI, name='HWI')
 CWI = pd.Series(CWI, name='CWI')
-
-data = pd.DataFrame([years, GSP, GDD, GSTmin, GSTmax, frost, summer, HWI, CWI]).T
+dry = pd.Series(dry, name='dry')
+wet = pd.Series(wet, name='wet')
+PRCP95P = pd.Series(PRCP95P, name='PRCP95P')
+data = pd.DataFrame([years, GSP, GDD, GSTmin, GSTmax, frost, summer, HWI, CWI, dry, wet, PRCP95P]).T
 data['YEAR'] = data.YEAR.astype(int)
 print(data)
 
 data.to_csv(path.join(dataroot, '..', 'wx-frontier-agg.csv'))
+
