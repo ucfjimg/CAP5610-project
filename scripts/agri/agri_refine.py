@@ -20,9 +20,7 @@ state_year_summary = SUMMARY_PATH + state + "_Year_Summary.csv"
 year_summary_df = pd.read_csv(state_year_summary)
 num_entries = len(year_summary_df.index)
 
-# Obtaining year with least number of associated records
 year = year_summary_df.at[num_entries - 1, "Year"]
-# year_freq = year_summary_df.at[num_entries - 1, "Value Counts"]
 
 # Accessing Annual Crop data
 agri_df = pd.read_csv(agri_state_path)
