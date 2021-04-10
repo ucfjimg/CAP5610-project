@@ -3,10 +3,14 @@ import pandas as pd
 import numpy as np
 from os import path
 import sys
+from datetime import datetime, timedelta
 
 '''
 Extract data from the three Iowa stations used by the Frontiers paper
 '''
+
+year0 = 1961
+yearn = 1990
 
 def is_season_day(m, d):
     '''
@@ -30,6 +34,18 @@ def streak(lst):
             count = 0
 
     return best
+
+
+def sample_5cd(month, day):
+    '''
+    Return the 5CD slice (5 contiuous days centered around the given date,
+    over the base period) for the given calendar day.
+    '''
+    agg = []
+    for year in range(year0, yearn+1):
+        center = data[(data.YEAR >= year0) & (data.YEAR <= yearn) & (data.MONTH == month) & (data.DAY == day)].index[0]
+        agg.append(data[center-2:center+3])
+    return pd.concat(agg)
 
 
 data = ['USC00135230.csv', 'USC00137572.csv', 'USW00014940.csv']
@@ -96,6 +112,16 @@ baseline = data.loc[(data.YEAR >= 1961) & (data.YEAR < 1991)]
 tmax90 = baseline[['TMAX', 'CALDAY']].groupby('CALDAY').agg(lambda lst: np.percentile(lst, 90))
 tmin20 = baseline[['TMIN', 'CALDAY']].groupby('CALDAY').agg(lambda lst: np.percentile(lst, 20))
 
+# we need to assume that all dates are accounted for. then making contiguous windows
+# of data is easy
+def yeardays(y):
+    return 366 if (y % 4) == 0 else 366
+
+def assertdays(year):
+    assert yeardays(year) == len(data[data.YEAR == year])
+
+map(assertdays, range(1941, 2021))
+
 # ETCCDI: "...let RRwn95 be the 95th percentile of precipitation on wet days in the 1961-1990 period"
 baseline_season = baseline.loc[is_season_day(data.MONTH, data.DAY)]  
 baseline_wet = baseline_season[baseline_season.PRCP >= 1]
@@ -112,7 +138,6 @@ CWI = []
 dry = []
 wet = []
 PRCP95P = []
-
 
 
 for year in all_years:
@@ -135,17 +160,6 @@ for year in all_years:
     # Summer days - count of days with tmax > 25
     summer.append((season.TMAX > 25).sum())
 
-    # heat and cold indices
-    # TODO the defs in the paper summary are unclear - implement
-    # the more specific ones from ETCCDI
-    tmax = season.merge(tmax90, on='CALDAY')
-    tmax = tmax.TMAX_x > tmax.TMAX_y
-    HWI.append(streak(tmax))
-
-    tmin = season.merge(tmin20, on='CALDAY')
-    tmin = tmin.TMIN_x < tmin.TMIN_y
-    CWI.append(streak(tmin))
-
     # dry and wet - longest contiguous streak of < or > 1mm days
     dry.append(streak(season.PRCP < 1))
     wet.append(streak(season.PRCP >= 1))
@@ -159,19 +173,37 @@ for year in all_years:
     #
     PRCP95P.append(len(season[season.PRCP >= RRwn95]))
 
-years = pd.Series(all_years, name='YEAR')
-GSP = pd.Series(GSP, name='GSP')
-GDD = pd.Series(GDD, name='GDD')
-GSTmax = pd.Series(GSTmax, name='GSTmax')
-GSTmin = pd.Series(GSTmin, name='GSTmin')
-frost = pd.Series(frost, name='frost')
-summer = pd.Series(summer, name='summer')
-HWI = pd.Series(HWI, name='HWI')
-CWI = pd.Series(CWI, name='CWI')
-dry = pd.Series(dry, name='dry')
-wet = pd.Series(wet, name='wet')
-PRCP95P = pd.Series(PRCP95P, name='PRCP95P')
-data = pd.DataFrame([years, GSP, GDD, GSTmin, GSTmax, frost, summer, HWI, CWI, dry, wet, PRCP95P]).T
+
+    hwi = []
+    cwi = []
+
+    d = datetime(year, 5, 10)
+    
+    while not (d.month == 10 and d.day == 21):
+        tmax = data[(data.YEAR == year) & (data.MONTH == d.month) & (data.DAY == d.day)].TMAX
+        tmin = data[(data.YEAR == year) & (data.MONTH == d.month) & (data.DAY == d.day)].TMIN
+        hwi.append((tmax > (sample_5cd(d.month, d.day).TMAX.quantile(0.9))).all())
+        cwi.append((tmin < (sample_5cd(d.month, d.day).TMIN.quantile(0.2))).all())
+        d += timedelta(days = 1)
+
+    HWI.append(streak(hwi))
+    CWI.append(streak(cwi))
+
+data = pd.DataFrame({
+    'YEAR': all_years,
+    'GSP': GSP,
+    'GDD': GDD,
+    'GSTmax': GSTmax,
+    'GSTmin': GSTmin,
+    'frost': frost,
+    'summer': summer,
+    'HWI': HWI,
+    'CWI': CWI,
+    'dry': dry,
+    'wet': wet,
+    'PRCP95P': PRCP95P
+})
+
 data['YEAR'] = data.YEAR.astype(int)
 print(data)
 
